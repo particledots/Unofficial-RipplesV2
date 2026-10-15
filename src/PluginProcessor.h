@@ -49,6 +49,5 @@ private:
     double smHzLog = std::log(1000.0), smQ = 0.0, smVca = 0.3, smIn2 = 0.0;
     double fs = 44100.0;
     bool first = true, pingWas = false;
-    float peakSc = 0.0f;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(UnofficialRipples2Processor)
 };

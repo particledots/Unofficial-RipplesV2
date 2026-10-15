@@ -206,7 +206,7 @@ public:
     // x = FILTER_IN in volts; stageHz = pole frequency of each stage (<= kStageMaxHz); iReso = resonance OTA bias current (amps); fs = rate this runs at.
     // y[0..3] = LP1..LP4 (volts, inverting stages, so LP1 = -H*w, LP2 = +H^2*w, ...). vcaU2 / vcaU4 = LP2 / LP4 after the 0.33 Hz AC-coupling, for the VCA output.
     void step(double x, double stageHz, double iReso, double fs, double* y) {
-        if (fs != lastFs) { lastFs = fs; aIn = 1.0 - std::exp(-2.0 * kPi * kOtaHpHz / fs); aV = 1.0 - std::exp(-2.0 * kPi * kVcaHpHz / fs); }
+        if (std::fabs(fs - lastFs) > 1e-9) { lastFs = fs; aIn = 1.0 - std::exp(-2.0 * kPi * kOtaHpHz / fs); aV = 1.0 - std::exp(-2.0 * kPi * kVcaHpHz / fs); }
         const double wcT = std::min(stageHz, 0.4 * fs);
         const double g = fastTan(kPi * wcT / fs);
         const double G = g / (1.0 + g);
