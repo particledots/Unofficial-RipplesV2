@@ -81,8 +81,8 @@ Ripples2Editor::Ripples2Editor(UnofficialRipples2Processor& pr) : AudioProcessor
     addKnob(trim, "trim", "TRIM", "TRIM: extra gain before the input stage, for quiet or loud tracks (not on the real module). Raise it to push into the input stage's soft clip.");
     addKnob(outGain, "outgain", "OUTPUT", "OUTPUT: gain after the filter (not on the real module). 0 dB = the module's own level, where 0 dBFS = 10 V.");
     addKnob(fm, "fm", "FM AMOUNT", "FM AMOUNT: how far the FM source moves the frequency (100% = 5 octaves for a full-scale signal). Negative pushes the frequency down instead of up.");
-    addKnob(fmAtk, "fmatk", "ATTACK", "ATTACK: rise time of the ENVELOPE and PING sources.");
-    addKnob(fmDec, "fmdec", "DECAY", "DECAY: fall time of the ENVELOPE and PING sources.");
+    addKnob(fmAtk, "fmatk", "ATTACK", "ATTACK: rise time of the ENVELOPE and PING ENV. sources.");
+    addKnob(fmDec, "fmdec", "DECAY", "DECAY: fall time of the ENVELOPE and PING ENV. sources.");
     addKnob(in2, "in2", "SIDECHAIN IN", "SIDECHAIN IN: mixes the sidechain track into the filter's audio (the module's second input, about -10 dB, no clipping). Separate from FM: the sidechain can do both.");
     for (Knob* k : { &fmAtk, &fmDec }) k->slider.textFromValueFunction = [](double v) { return v < 10.0 ? juce::String(v, 1) + " ms" : v < 1000.0 ? juce::String((int) std::lround(v)) + " ms" : juce::String(v / 1000.0, 2) + " s"; };
     freq.slider.textFromValueFunction = [](double v) { return v < 1000.0 ? juce::String(v, v < 100.0 ? 1 : 0) + " Hz" : juce::String(v / 1000.0, 2) + " kHz"; };
@@ -97,8 +97,8 @@ Ripples2Editor::Ripples2Editor(UnofficialRipples2Processor& pr) : AudioProcessor
     addGroup(output, "output", "OUTPUT", { "LOW-PASS", "BAND-PASS", "HIGH-PASS" }, "OUTPUT: which of the module's outputs you hear. Low-pass has its own VCA (LP VCA LEVEL). Band-pass is made from two or four stages; the high-pass is always 12 dB.");
     addGroup(slope, "slope", "SLOPE", { "12 dB", "24 dB" }, "SLOPE: 12 dB (two stages) or 24 dB (four stages) per octave. The high-pass is only 12 dB, so this has no effect on HIGH-PASS.");
     addGroup(taper, "taper", "RESONANCE TAPER", { "SMOOTH", "AS DRAWN" }, "RESONANCE TAPER: SMOOTH raises the resonance evenly and self-oscillates near 88%. AS DRAWN follows the schematic, so most of the resonance is packed near the top and it self-oscillates at 77%.");
-    addGroup(fmSrc, "fmsrc", "FM SOURCE", { "SIDECHAIN", "OWN INPUT", "ENVELOPE", "PING" },
-             "FM SOURCE: SIDECHAIN = the sidechain signal moves the frequency. OWN INPUT = the input does (audio-rate). ENVELOPE = the level of the sidechain (or the input) moves it. PING = the PING button (or automating it) fires an envelope.");
+    addGroup(fmSrc, "fmsrc", "FM SOURCE", { "SIDECHAIN", "OWN INPUT", "ENVELOPE", "PING ENV." },
+             "FM SOURCE: SIDECHAIN = the sidechain signal moves the frequency. OWN INPUT = the input does (audio-rate). ENVELOPE = the level of the sidechain (or the input) moves it. PING ENV. = the envelope fired by the FIRE PING button (or by automating it).");
 
     pingAttach = std::make_unique<juce::ParameterAttachment>(*proc.apvts.getParameter("ping"), [this](float v) { pingButton.setToggleState(v > 0.5f, juce::dontSendNotification); });
     auto wasDownPtr = std::make_shared<bool>(false);
@@ -113,7 +113,7 @@ Ripples2Editor::Ripples2Editor(UnofficialRipples2Processor& pr) : AudioProcessor
         wasDown = down;
     };
     addAndMakeVisible(pingButton);
-    hints[&pingButton] = "PING: click to fire the FM envelope once (rises over ATTACK, falls over DECAY). Set FM SOURCE to PING and raise FM AMOUNT. Like pinging the module with a trigger.";
+    hints[&pingButton] = "FIRE PING: click to fire the FM envelope once (rises over ATTACK, falls over DECAY). Set FM SOURCE to PING ENV. and raise FM AMOUNT. Like pinging the module with a trigger.";
 
     hint.setFont(juce::FontOptions(12.0f)); hint.setColour(juce::Label::textColourId, Ripples2Look::dim());
     hint.setJustificationType(juce::Justification::topLeft); hint.setText(defaultHint, juce::dontSendNotification);
@@ -197,19 +197,19 @@ void Ripples2Editor::paint(juce::Graphics& g) {
     g.setColour(Ripples2Look::panel().brighter(0.3f)); g.drawEllipse((float) m.getX(), (float) m.getY() + 2, 12.0f, 12.0f, 1.0f);
     g.setColour(Ripples2Look::dim()); g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
     g.drawText(lit ? "INPUT CLIP  " + juce::String(clipShown, 1) + " dB" : "INPUT CLIP", m.getX() + 18, m.getY(), 130, 16, juce::Justification::centredLeft);
-    const int bx = m.getX(), by = m.getY() + 24, bw = 150;
-    g.setColour(Ripples2Look::bg()); g.fillRoundedRectangle((float) bx, (float) by, (float) bw, 8.0f, 3.0f);
-    g.setColour(Ripples2Look::accent()); g.fillRoundedRectangle((float) bx, (float) by, bw * juce::jlimit(0.0f, 1.0f, scShown), 8.0f, 3.0f);
+    const int bx = m.getX(), by = m.getY() + 20, bw = 150;
+    g.setColour(Ripples2Look::bg()); g.fillRoundedRectangle((float) bx, (float) by, (float) bw, 6.0f, 3.0f);
+    g.setColour(Ripples2Look::accent()); g.fillRoundedRectangle((float) bx, (float) by, bw * juce::jlimit(0.0f, 1.0f, scShown), 6.0f, 3.0f);
     g.setColour(Ripples2Look::dim());
-    g.drawText(scConn ? "SIDECHAIN LEVEL" : "SIDECHAIN: none connected", bx, by + 10, 190, 14, juce::Justification::centredLeft);
-    g.setColour(Ripples2Look::bg()); g.fillRoundedRectangle((float) bx, (float) by + 32, (float) bw, 8.0f, 3.0f);
-    g.setColour(Ripples2Look::accent().darker(0.2f)); g.fillRoundedRectangle((float) bx, (float) by + 32, bw * juce::jlimit(0.0f, 1.0f, fmShown / 5.0f), 8.0f, 3.0f);
-    g.setColour(Ripples2Look::dim()); g.drawText("FM NOW (octaves, up to 5)", bx, by + 42, 190, 14, juce::Justification::centredLeft);
+    g.drawText(scConn ? "SIDECHAIN LEVEL" : "SIDECHAIN: none connected", bx, by + 8, 190, 12, juce::Justification::centredLeft);
+    g.setColour(Ripples2Look::bg()); g.fillRoundedRectangle((float) bx, (float) by + 24, (float) bw, 6.0f, 3.0f);
+    g.setColour(Ripples2Look::accent().darker(0.2f)); g.fillRoundedRectangle((float) bx, (float) by + 24, bw * juce::jlimit(0.0f, 1.0f, fmShown / 5.0f), 6.0f, 3.0f);
+    g.setColour(Ripples2Look::dim()); g.drawText("FM NOW (full bar = 5 octaves)", bx, by + 32, 190, 12, juce::Justification::centredLeft);
 }
 
 void Ripples2Editor::resized() {
     const int W = getWidth();
-    meterArea = { W - 28 - 190, 16, 190, 70 };
+    meterArea = { W - 28 - 172, 12, 172, 58 };
     // row of button groups
     auto place = [](Group& g, int x, int y, int bw, int gap) {
         g.label.setBounds(x, y, 160, 13);
@@ -217,7 +217,7 @@ void Ripples2Editor::resized() {
     };
     place(output, 28, 66, 96, 6);
     place(slope, 28 + 3 * 102 + 18, 66, 66, 6);
-    place(taper, 28 + 3 * 102 + 18 + 2 * 72 + 18, 66, 96, 6);
+    place(taper, 28 + 3 * 102 + 18 + 2 * 72 + 18, 66, 92, 6);
     curveArea = { 28, 114, W - 56, 136 };
     // six main knobs
     Knob* big[6] = { &freq, &reso, &vca, &inGain, &trim, &outGain };

@@ -39,10 +39,10 @@ It is a separate plug-in from "Unofficial Ripples" (the first, 2019 circuit): di
 | FREQUENCY, RESONANCE | as above |
 | LP VCA LEVEL | level of the low-pass output only |
 | INPUT STAGE, TRIM, OUTPUT | module's input pot (dB); extra gain before it; gain after the filter |
-| FM SOURCE | Sidechain, Own input, Envelope (level of the sidechain, or of the input if none), Ping |
+| FM SOURCE | Sidechain, Own input, Envelope (level of the sidechain, or of the input if none), Ping env. |
 | FM AMOUNT | -100…+100% (negative pushes the frequency down) |
 | ATTACK / DECAY | for Envelope and Ping |
-| PING | click to fire the envelope once (it is also an automatable parameter) |
+| FIRE PING | click to fire the Ping envelope once (also an automatable parameter) |
 | SIDECHAIN IN | how much of the sidechain track is mixed into the filter's audio |
 
 The panel has a curve of the filter's shape at the current settings (small-signal maths, not a measurement), an input-clip light, a sidechain level bar, an FM meter, and a line at the bottom that explains whatever the mouse is over. Every control is a normal parameter, so all can be automated.

@@ -47,7 +47,7 @@ private:
     Ripples2Look look;
     Knob freq, reso, vca, inGain, trim, outGain, fm, fmAtk, fmDec, in2;
     Group output, slope, taper, fmSrc;
-    juce::TextButton pingButton { "PING" };
+    juce::TextButton pingButton { "FIRE PING" };
     std::unique_ptr<juce::ParameterAttachment> pingAttach;
     juce::Label hint;
     juce::String defaultHint;

@@ -14,7 +14,7 @@ UNOFFICIAL RIPPLES V2  (AU + VST3)  -  how to install
    window's header and pick a TRACK (for example your drum track). Choosing "input 1/2" does nothing; it must be a track.
    Then on the panel: FM SOURCE = SIDECHAIN and raise FM AMOUNT, or raise SIDECHAIN IN to hear that track through the filter.
    The SIDECHAIN LEVEL bar on the panel moves when the sidechain is really connected.
-6. No sidechain at all? Use FM SOURCE = PING and click PING, or ENVELOPE (follows the plug-in's own input), or OWN INPUT.
+6. No sidechain at all? Use FM SOURCE = PING ENV. and click FIRE PING, or ENVELOPE (follows the plug-in's own input), or OWN INPUT.
 7. The plug-in reports about 31 samples of delay to Logic (its oversampling filters).
 
 Not checked yet by anyone: loading in Logic, MIDI/automation of PING, how it sounds next to the hardware. Please tell me what you find.
