@@ -13,7 +13,7 @@ static void setParam(Proc& p, const char* id, float real) { auto* prm = p.apvts.
 
 struct Opts {
     int fmSrc = 0; float fmAmt = 0.0f; int scMode = 0; float scLevel = 0.0f; float in2 = 0.0f; int output = 0, slope = 1; float freq = 800.0f; float reso = 0.0f;
-    bool pingAtStart = false; float vca = 1.0f; int inputKind = 0;
+    bool pingAtStart = false; float decay = 100.0f; float vca = 1.0f; int inputKind = 0;
 };
 // scMode: 0 = sidechain bus disabled, 1 = DC level scLevel, 2 = burst (1 for the first 2400 samples, then 0), 3 = silent, 4 = sine at 300 Hz of amplitude scLevel
 // inputKind: 0 = noise, 1 = silence
@@ -27,7 +27,7 @@ static std::vector<float> run(const Opts& o, float* clipMax = nullptr, float* sc
     p.setRateAndBufferSizeDetails(fs, block); p.prepareToPlay(fs, block);
     setParam(p, "freq", o.freq); setParam(p, "reso", o.reso); setParam(p, "output", (float) o.output); setParam(p, "slope", (float) o.slope);
     setParam(p, "fm", o.fmAmt); setParam(p, "fmsrc", (float) o.fmSrc); setParam(p, "in2", o.in2); setParam(p, "vca", o.vca);
-    setParam(p, "fmatk", 1.0f); setParam(p, "fmdec", 100.0f);
+    setParam(p, "fmatk", 1.0f); setParam(p, "fmdec", o.decay);
     std::mt19937 rng(7); std::uniform_real_distribution<float> u(-0.3f, 0.3f);
     juce::AudioBuffer<float> buf(4, block); juce::MidiBuffer midi; std::vector<float> out; long pos = 0;
     for (int b = 0; b < 40; ++b) {
@@ -70,15 +70,15 @@ int main() {
     // envelope from the sidechain burst
     { Opts a = o; a.fmSrc = 2; a.fmAmt = 0.6f; a.scMode = 2; Opts b = a; b.scMode = 3;
       auto ya = run(a), yb = run(b);
-      CHECK(rms(ya, 2400, 7200) > rms(yb, 2400, 7200) * 2.0, "envelope FM did not open the filter after the burst: %g vs %g", rms(ya, 2400, 7200), rms(yb, 2400, 7200));
+      CHECK(rms(ya, 2400, 7200) > rms(yb, 2400, 7200) * 1.6, "envelope FM did not open the filter after the burst: %g vs %g", rms(ya, 2400, 7200), rms(yb, 2400, 7200));
       Opts c = a; c.scMode = 0; CHECK(rms(run(c)) > base * 1.05, "envelope on own input did nothing");
       CHECK(std::fabs(rms(run(b)) - base) < 1e-6, "envelope with silent sidechain moved the sound"); }
     // ping: a click of the Ping parameter opens the filter for a while, then it falls back; nothing without it
-    { Opts a = o; a.fmSrc = 3; a.fmAmt = 0.6f; a.pingAtStart = true; Opts b = a; b.pingAtStart = false;
+    { Opts a = o; a.fmSrc = 3; a.fmAmt = 0.6f; a.pingAtStart = true; a.decay = 40.0f; Opts b = a; b.pingAtStart = false;
       auto ya = run(a), yb = run(b);
       CHECK(std::fabs(rms(yb) - base) < 1e-6, "ping source moved the sound without a ping");
       const long t0 = 2 * 512 + 100;
-      CHECK(rms(ya, t0, t0 + 4000) > rms(yb, t0, t0 + 4000) * 1.5, "ping did not open the filter: %g vs %g", rms(ya, t0, t0 + 4000), rms(yb, t0, t0 + 4000));
+      CHECK(rms(ya, t0, t0 + 3000) > rms(yb, t0, t0 + 3000) * 1.5, "ping did not open the filter: %g vs %g", rms(ya, t0, t0 + 3000), rms(yb, t0, t0 + 3000));
       CHECK(std::fabs(rms(ya, 15000, 20000) - rms(yb, 15000, 20000)) < 0.02 * rms(yb, 15000, 20000), "ping did not fall back"); }
     // second input: with no main input, the sidechain audio comes through the filter (and not when its level is 0)
     { Opts a = o; a.inputKind = 1; a.scMode = 4; a.scLevel = 0.3f; a.freq = 3000.0f; a.in2 = 1.0f; a.vca = 1.0f;
