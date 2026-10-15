@@ -1,0 +1,79 @@
+name: Build plugin (macOS)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:      # adds a "Run workflow" button in the Actions tab
+
+jobs:
+  build-macos:
+    runs-on: macos-14     # Apple silicon runner
+    defaults:
+      run:
+        shell: bash .github/wrap.sh {0}   # same as plain bash, plus a readable error annotation when a step fails
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCOPY_PLUGIN_AFTER_BUILD=OFF -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+
+      - name: Tests of the filter model (gains, slopes, resonance, input clip, second input, FM, ping, stability)
+        run: |
+          cmake --build build --target ripples2_test -j4
+          ./build/ripples2_test
+
+      - name: Deliberate breaks (each must make the tests fail)
+        run: bash tools/mutate.sh
+
+      - name: Speed check
+        continue-on-error: true
+        run: |
+          cmake --build build --target ripples2_bench -j4
+          ./build/ripples2_bench | tee bench.txt
+          echo "::notice title=speed::$(tr '\n' ' ' < bench.txt)"
+
+      - name: Whole plug-in check (sidechain, FM sources, ping, outputs, state, panel layout)
+        run: |
+          cmake --build build --target ripples2_proc_test -j4
+          ./build/ripples2_proc_test_artefacts/Release/ripples2_proc_test
+
+      - name: Picture of the panel (does not stop the build if it fails)
+        continue-on-error: true
+        run: |
+          cmake --build build --target ripples2_snapshot -j4
+          ./build/ripples2_snapshot_artefacts/Release/ripples2_snapshot panel.png
+          ls -l panel.png
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        continue-on-error: true
+        with:
+          name: panel-picture
+          path: panel.png
+          if-no-files-found: ignore
+
+      - name: Build AU + VST3
+        run: cmake --build build --target UnofficialRipples2_AU UnofficialRipples2_VST3 -j4
+
+      - name: Ad-hoc sign (lets Apple silicon load an unsigned build)
+        run: |
+          for b in build/UnofficialRipples2_artefacts/Release/AU/*.component build/UnofficialRipples2_artefacts/Release/VST3/*.vst3; do
+            codesign --force --deep -s - "$b"
+          done
+
+      - name: Package
+        run: |
+          mkdir -p dist
+          cp -R build/UnofficialRipples2_artefacts/Release/AU/*.component dist/
+          cp -R build/UnofficialRipples2_artefacts/Release/VST3/*.vst3 dist/
+          cp README.md dist/README.md
+          cp INSTALL.txt dist/INSTALL.txt
+          lipo -archs dist/*.component/Contents/MacOS/*
+          for a in arm64 x86_64; do echo "== $a"; lipo -thin $a dist/*.component/Contents/MacOS/* -output /tmp/slice_$a; otool -l /tmp/slice_$a | grep -A4 -E "LC_BUILD_VERSION|LC_VERSION_MIN" | grep -E "minos|version"; done
+          ditto -c -k --keepParent dist Unofficial-RipplesV2-macOS.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Unofficial-RipplesV2-macOS
+          path: Unofficial-RipplesV2-macOS.zip

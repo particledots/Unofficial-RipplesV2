@@ -1,0 +1,20 @@
+UNOFFICIAL RIPPLES V2  (AU + VST3)  -  how to install
+
+1. Unzip the download. You get a folder called "Unofficial-RipplesV2-macOS".
+2. Open Terminal and paste this (change the path if you unzipped somewhere else). It clears the "downloaded from the internet" block:
+      xattr -dr com.apple.quarantine ~/Downloads/Unofficial-RipplesV2-macOS/*
+3. Copy  "Unofficial Ripples V2.component"  into  ~/Library/Audio/Plug-Ins/Components/
+   Copy  "Unofficial Ripples V2.vst3"       into  ~/Library/Audio/Plug-Ins/VST3/
+   (In Finder: Go > Go to Folder..., paste the path.)
+   This is a NEW plug-in with its own ID. It does not replace "Unofficial Ripples" (the first one), so both can be installed.
+   If you installed an earlier build of V2, delete its .component and .vst3 first.
+4. In Logic: Settings > Plug-in Manager. Find "particledots: Unofficial Ripples V2" and click Reset & Rescan Selection
+   (or rescan all). Put it on an audio or instrument track as an effect.
+5. Using the sidechain (FM, or a second audio input): put the plug-in on a track, then use the "Side Chain" menu in the plug-in
+   window's header and pick a TRACK (for example your drum track). Choosing "input 1/2" does nothing; it must be a track.
+   Then on the panel: FM SOURCE = SIDECHAIN and raise FM AMOUNT, or raise SIDECHAIN IN to hear that track through the filter.
+   The SIDECHAIN LEVEL bar on the panel moves when the sidechain is really connected.
+6. No sidechain at all? Use FM SOURCE = PING and click PING, or ENVELOPE (follows the plug-in's own input), or OWN INPUT.
+7. The plug-in reports about 31 samples of delay to Logic (its oversampling filters).
+
+Not checked yet by anyone: loading in Logic, MIDI/automation of PING, how it sounds next to the hardware. Please tell me what you find.
