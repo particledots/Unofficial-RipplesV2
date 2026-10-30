@@ -71,6 +71,11 @@ jobs:
           cp INSTALL.txt dist/INSTALL.txt
           lipo -archs dist/*.component/Contents/MacOS/*
           for a in arm64 x86_64; do echo "== $a"; lipo -thin $a dist/*.component/Contents/MacOS/* -output /tmp/slice_$a; otool -l /tmp/slice_$a | grep -A4 -E "LC_BUILD_VERSION|LC_VERSION_MIN" | grep -E "minos|version"; done
+          # Easy installer for Logic (double-click; same file in every Unofficial plugin)
+          cp tools/install/Install-Unofficial-Plugin.command dist/
+          chmod +x dist/Install-Unofficial-Plugin.command
+          if [ -f dist/INSTALL.txt ]; then printf '\nEASY INSTALL (Logic, Audio Unit): double-click Install-Unofficial-Plugin.command in this folder. It asks for your Mac password once.\n' >> dist/INSTALL.txt; fi
+          [ -x dist/Install-Unofficial-Plugin.command ] || { echo "::error::PACKAGE missing Install-Unofficial-Plugin.command"; exit 1; }
           ditto -c -k --keepParent dist Unofficial-RipplesV2-macOS.zip
 
       - uses: actions/upload-artifact@v4
